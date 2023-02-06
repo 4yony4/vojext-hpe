@@ -1,6 +1,6 @@
 #include <yarp/os/all.h>
 #include <event-driven/all.h>
-#include "yarp/rosmsg/output.h"
+#include "yarp/rosmsg/Vjxoutput.h"
 #include <vector>
 
 using namespace yarp::os;
@@ -12,13 +12,13 @@ class yarpRosBridge : public RFModule, public Thread
 {
 
 private:
-    int detF;        // frequency of output
+    int detF;        // frequency of Vjxoutput
     double t0, tnow; // timestamp variables
 
     // yarp-ros bridge
     yarp::os::Node *ros_node{nullptr};
-    yarp::os::Publisher<yarp::rosmsg::output> ros_publisher;
-    yarp::rosmsg::output ros_output;
+    yarp::os::Publisher<yarp::rosmsg::Vjxoutput> ros_publisher;
+    yarp::rosmsg::Vjxoutput ros_output;
 
 public:
     bool configure(yarp::os::ResourceFinder &rf) override
@@ -29,7 +29,7 @@ public:
             return false;
         }
         // set the module name used to name ports
-        setName((rf.check("name", Value("/vojext-hpe")).asString()).c_str());
+        // setName((rf.check("name", Value("/vojext-hpe")).asString()).c_str());
 
         detF = rf.check("detF", Value(10)).asInt32();
 

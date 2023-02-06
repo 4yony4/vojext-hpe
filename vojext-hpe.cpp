@@ -8,7 +8,7 @@
 #include <hpe-core/openpose_detector.h>
 #include <hpe-core/fusion.h>
 #include <opencv2/opencv.hpp>
-#include "yarp/rosmsg/output.h"
+#include "yarp/rosmsg/Vjxoutput.h"
 
 
 #include <vector>
@@ -19,94 +19,94 @@ using namespace yarp::sig;
 using std::vector;
 using namespace ev;
 
-class openposethread {
-private:
+// class openposethread {
+// private:
 
-    std::thread th;
-    hpecore::OpenPoseDetector detop;
-    hpecore::stampedPose pose{0.0, -1.0, 0.0};
-    cv::Mat image;
+//     std::thread th;
+//     hpecore::OpenPoseDetector detop;
+//     hpecore::stampedPose pose{0.0, -1.0, 0.0};
+//     cv::Mat image;
 
-    bool stop{false};
-    bool data_ready{true};
-    std::mutex m;
+//     bool stop{false};
+//     bool data_ready{true};
+//     std::mutex m;
 
-    void run()
-    {
-        while(true) {
-            m.lock();
-            if(stop) return;
-            pose.pose = detop.detect(image);
-            data_ready = true;
-        }
-    }
+//     void run()
+//     {
+//         while(true) {
+//             m.lock();
+//             if(stop) return;
+//             pose.pose = detop.detect(image);
+//             data_ready = true;
+//         }
+//     }
 
-public:
+// public:
 
-    bool init(std::string model_path, std::string model_name)
-    {
-        //initialise open pose
-        if(!detop.init(model_path, model_name, "256"))
-            return false;
+//     bool init(std::string model_path, std::string model_name)
+//     {
+//         //initialise open pose
+//         if(!detop.init(model_path, model_name, "256"))
+//             return false;
         
-        //make sure the thread won't start until an image is provided
-        m.lock();
+//         //make sure the thread won't start until an image is provided
+//         m.lock();
 
-        //make sure that providing an image will start things for the first go
-        data_ready = true;
+//         //make sure that providing an image will start things for the first go
+//         data_ready = true;
 
-        //start the thread
-        th = std::thread( [this]{this->run();} );
+//         //start the thread
+//         th = std::thread( [this]{this->run();} );
         
-        return true;
-    }
+//         return true;
+//     }
 
-    void close()
-    {
-        stop = true;
-        m.try_lock();
-        m.unlock();
-    }
+//     void close()
+//     {
+//         stop = true;
+//         m.try_lock();
+//         m.unlock();
+//     }
 
-    bool update(cv::Mat next_image, double image_timestamp, hpecore::stampedPose &previous_result)
-    {
-        //if no data is ready (still processing) do nothing
-        if(!data_ready)
-            return false;
+//     bool update(cv::Mat next_image, double image_timestamp, hpecore::stampedPose &previous_result)
+//     {
+//         //if no data is ready (still processing) do nothing
+//         if(!data_ready)
+//             return false;
         
-        //else set the result to the provided stampedPose
-        previous_result = pose;
+//         //else set the result to the provided stampedPose
+//         previous_result = pose;
         
-        //set the timestamp
-        pose.timestamp = image_timestamp;
+//         //set the timestamp
+//         pose.timestamp = image_timestamp;
 
-        //and the image for the next detection
-        static cv::Mat img_u8, img_float;
-        next_image.copyTo(img_float);
-        double min_val, max_val;
-        cv::minMaxLoc(img_float, &min_val, &max_val);
-        max_val = std::max(fabs(max_val), fabs(min_val));
-        img_float /= (2 * max_val);
-        img_float += 0.5; 
-        img_float.convertTo(img_u8, CV_8U, 255, 0);
-        cv::cvtColor(img_u8, image, cv::COLOR_GRAY2BGR);
+//         //and the image for the next detection
+//         static cv::Mat img_u8, img_float;
+//         next_image.copyTo(img_float);
+//         double min_val, max_val;
+//         cv::minMaxLoc(img_float, &min_val, &max_val);
+//         max_val = std::max(fabs(max_val), fabs(min_val));
+//         img_float /= (2 * max_val);
+//         img_float += 0.5; 
+//         img_float.convertTo(img_u8, CV_8U, 255, 0);
+//         cv::cvtColor(img_u8, image, cv::COLOR_GRAY2BGR);
 
-        //and unlock the procesing thread
-        m.try_lock();
-        m.unlock();
-        data_ready = false;
-        return true;
-    }
+//         //and unlock the procesing thread
+//         m.try_lock();
+//         m.unlock();
+//         data_ready = false;
+//         return true;
+//     }
 
-    // hpecore::OpenPoseDetector detop;
+//     // hpecore::OpenPoseDetector detop;
 
-    // hpecore::skeleton13 detect(cv::Mat pimmer3)
-    // {
-    //     hpecore::skeleton13 pose = this->detop.detect(pimmer3);
-    //     return pose;
-    // }
+//     // hpecore::skeleton13 detect(cv::Mat pimmer3)
+//     // {
+//     //     hpecore::skeleton13 pose = this->detop.detect(pimmer3);
+//     //     return pose;
+//     // }
 
-};
+// };
 
 class isaacHPE : public RFModule, public Thread {
 
@@ -120,7 +120,7 @@ private:
     hpecore::skeleton13 skeleton_gt{0};
     hpecore::skeleton13 skeleton_detection{0};
 
-    openposethread opt;
+    // openposethread opt;
     hpecore::jointName my_joint;
     // hpecore::queuedVelocity velocity_estimator;
     hpecore::surfacedVelocity velocity_estimator;
@@ -148,8 +148,8 @@ private:
     bool movenet = false;
 
     yarp::os::Node* ros_node{nullptr};
-    yarp::os::Publisher<yarp::rosmsg::output> ros_publisher;
-    yarp::rosmsg::output ros_output;
+    yarp::os::Publisher<yarp::rosmsg::Vjxoutput> ros_publisher;
+    yarp::rosmsg::Vjxoutput ros_output;
 
 public:
 
@@ -178,11 +178,11 @@ public:
             return false;
         }
 
-        // Network::connect("/file/ch0dvs:o", getName("/AE:i"), "fast_tcp");
+        Network::connect("/file/ch0dvs:o", getName("/AE:i"), "fast_tcp");
         // // Network::connect("/atis3/AE:o", getName("/AE:i"), "fast_tcp");
-        // Network::connect("/file/ch2GT50Hzskeleton:o", getName("/gt:i"), "fast_tcp");
+        Network::connect("/file/ch2GT50Hzskeleton:o", getName("/gt:i"), "fast_tcp");
         // Network::connect("/movenet/sklt:o", getName("/movenet:i"), "fast_tcp");
-         Network::connect("/zynqGrabber/AE:o", getName("/AE:i"), "fast_tcp");
+        //  Network::connect("/zynqGrabber/AE:o", getName("/AE:i"), "fast_tcp");
 
         use_gt = rf.check("use_gt") && rf.check("use_gt", Value(true)).asBool();
         movenet = rf.check("movenet") && rf.check("movenet", Value(true)).asBool();
@@ -226,8 +226,8 @@ public:
 
         std::string models_path = rf.check("models_path", Value("/openpose/models")).asString();
         std::string pose_model = rf.check("pose_model", Value("COCO")).asString();
-        if(!opt.init(models_path, pose_model))
-            return false;
+        // if(!opt.init(models_path, pose_model))
+        //     return false;
 
         if(rf.check("v")) {
             std::string videopath = rf.find("v").asString();
@@ -266,7 +266,7 @@ public:
 
     void onStop() override
     {
-        opt.close();
+        // opt.close();
         input_events.close();
         input_grey.close();
         input_gt.close();
@@ -359,6 +359,7 @@ public:
         double t_write;
         double randNoise;
         hpecore::skeleton13_vel jv;
+        std:vector<double> sklt_out, vel_out;
 
         while (!Thread::isStopping())
         {
@@ -388,8 +389,32 @@ public:
                     state.updateFromPosition(skeleton_detection, 0.0);
                     dt = tnow - tD;
                     tD = Time::now() - t0;
+                    sklt_out.clear();
+                    vel_out.clear();
                     detection_available = (gt_container != nullptr);
-                }
+
+                    // format skeleton to ros output
+                    for (int j = 0; j < 13; j++)
+                    {
+                        sklt_out.push_back(skeleton_detection[j].u);
+                        sklt_out.push_back(skeleton_detection[j].v);
+                        vel_out.push_back(jv[j].u);
+                        vel_out.push_back(jv[j].v);
+                    }
+                    // for(auto t : sklt_out)
+                    //     std::cout << t << ", ";
+                    // std::cout << std::endl;
+                    // for(auto t : vel_out)
+                    //     std::cout << t << ", ";
+                    // std::cout << std::endl;
+                    ros_output.timestamp = tnow;
+                    ros_output.pose = sklt_out;
+                    ros_output.velocity = vel_out;
+                    // publish data
+                    ros_publisher.prepare() = ros_output;
+                    ros_publisher.write();
+                    
+            }
                 else
                     detection_available = false;
             }
@@ -411,40 +436,40 @@ public:
                     else
                         detection_available = false;
                 }
-                else // use OpenPose
-                {
-                    detection_available = opt.update(pim.getSurface(), Time::now(), detected_pose);
-                    if (detection_available && hpecore::poseNonZero(detected_pose.pose))
-                    {
-                        skeleton_detection = detected_pose.pose;
-                        std::cout << "\033c";
-                        yInfo() << 1 / (tnow - tD);
-                        dt = tnow - tD;
-                        tD = Time::now() - t0;
+                // else // use OpenPose
+                // {
+                //     detection_available = opt.update(pim.getSurface(), Time::now(), detected_pose);
+                //     if (detection_available && hpecore::poseNonZero(detected_pose.pose))
+                //     {
+                //         skeleton_detection = detected_pose.pose;
+                //         std::cout << "\033c";
+                //         yInfo() << 1 / (tnow - tD);
+                //         dt = tnow - tD;
+                //         tD = Time::now() - t0;
                         
-                        // format skeleton to ros output
-                        std:vector<double> sklt_out, vel_out;
-                        for (int j = 0; j < 13; j++)
-                        {
-                            sklt_out.push_back(skeleton_detection[j].u);
-                            sklt_out.push_back(skeleton_detection[j].v);
-                            vel_out.push_back(jv[j].u);
-                            vel_out.push_back(jv[j].v);
-                        }
-                        // for(auto t : sklt_out)
-                        //     std::cout << t << ", ";
-                        // std::cout << std::endl;
-                        // for(auto t : vel_out)
-                        //     std::cout << t << ", ";
-                        // std::cout << std::endl;
-                        ros_output.timestamp = tnow;
-                        ros_output.pose = sklt_out;
-                        ros_output.velocity = vel_out;
-                        // publish data
-                        ros_publisher.prepare() = ros_output;
-                        ros_publisher.write();
-                    }
-                }
+                //         // format skeleton to ros output
+                        
+                //         for (int j = 0; j < 13; j++)
+                //         {
+                //             sklt_out.push_back(skeleton_detection[j].u);
+                //             sklt_out.push_back(skeleton_detection[j].v);
+                //             vel_out.push_back(jv[j].u);
+                //             vel_out.push_back(jv[j].v);
+                //         }
+                //         // for(auto t : sklt_out)
+                //         //     std::cout << t << ", ";
+                //         // std::cout << std::endl;
+                //         // for(auto t : vel_out)
+                //         //     std::cout << t << ", ";
+                //         // std::cout << std::endl;
+                //         ros_output.timestamp = tnow;
+                //         ros_output.pose = sklt_out;
+                //         ros_output.velocity = vel_out;
+                //         // publish data
+                //         ros_publisher.prepare() = ros_output;
+                //         ros_publisher.write();
+                //     }
+                // }
             }
 
             // ---------- EVENT PROCESSING ----------
